@@ -16,13 +16,6 @@
         group: ansible
         owner: ansible
 
-    - name: Install additional packages 
-      ansible.builtin.package:
-        name:
-          - git
-          - tree
-        state: latest
-
     - name: Set AWX
       block:
         - name: Install necessary packages for Docker Engine
