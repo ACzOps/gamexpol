@@ -6,3 +6,4 @@ ansible-old
 terraform-proxmox.log
 .terraform*
 *.pem
+ansible/ansible-inventory.yaml

@@ -3,6 +3,9 @@
   hosts: localhost
   gather_facts: yes
 
+- name: Common provisioning for every host
+  ansible.builtin.import_playbook: "{{ playbook_dir }}/common-playbook.yaml"
+
 - name: Provision Ansible server
   ansible.builtin.import_playbook: "{{ playbook_dir }}/ansible-playbook.yaml"
 

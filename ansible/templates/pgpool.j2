@@ -703,17 +703,6 @@ wd_lifecheck_password = ''
                                     # Port number for other watchdog 0
                                     # (change requires restart)
 
-# Experimental stuff for later
-
-#{% for node in groups['pgpool'] %}
-#{% if node != inventory_hostname %}
-## --- Other pgpool config for {{ hostvars[node]['ansible_host'] }} as backend{{ loop.index0 }} --- #
-#other_pgpool_hostname{{ loop.index0 }} = '{{ hostvars[node]['ansible_host'] }}'
-#other_pgpool_port{{ loop.index0 }}  = 5432
-#other_wd_port{{ loop.index0 }} = 9000    
-#{% endif %}                              
-#{% endfor %}
-
 #------------------------------------------------------------------------------
 # OTHERS
 #------------------------------------------------------------------------------
