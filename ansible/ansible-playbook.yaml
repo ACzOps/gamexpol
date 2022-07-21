@@ -2,12 +2,13 @@
 - name: Self-configuration of Ansible server
   hosts: localhost
   gather_facts: yes
-  become: yes
+  remote_user: ansible
 
   tasks:
     - name: Change hostname to ansible
       ansible.builtin.hostname: 
         name: ansible
+      become: true
 
     - name: Set right permissions to private key
       ansible.builtin.file:
@@ -17,6 +18,7 @@
         owner: ansible
 
     - name: Set AWX
+      become: true
       block:
         - name: Install necessary packages for Docker Engine
           ansible.builtin.apt:
@@ -65,8 +67,8 @@
             deb: https://storage.googleapis.com/minikube/releases/latest/minikube_latest_amd64.deb
           when: minikube.rc != 0
 
-        - name: Run Kubernetes cluster in Minikube 
-          ansible.builtin.command:
-            cmd: minikube start --addons=ingress --cpus=4 --cni=flannel --install-addons=true --kubernetes-version=stable --memory=4g
+    - name: Run Kubernetes cluster in Minikube 
+      ansible.builtin.command:
+        cmd: minikube start --addons=ingress --cpus=4 --cni=flannel --install-addons=true --kubernetes-version=stable --memory=4g
 
     

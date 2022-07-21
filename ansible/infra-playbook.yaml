@@ -4,10 +4,10 @@
   gather_facts: yes
 
 - name: Provision Ansible server
-  ansible.builtin.import_playbook: ansible-playbook.yaml
+  ansible.builtin.import_playbook: "{{ playbook_dir }}/ansible-playbook.yaml"
 
 - name: Provision PostgreSQL server nodes
-  ansible.builtin.import_playbook: postgresql-playbook.yaml
+  ansible.builtin.import_playbook: "{{ playbook_dir }}/postgresql-playbook.yaml"
 
 - name: Provision PGPool load balancer
-  ansible.builtin.import_playbook: pgpool-playbook.yaml
+  ansible.builtin.import_playbook: "{{ playbook_dir }}/pgpool-playbook.yaml"

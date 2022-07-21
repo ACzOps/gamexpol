@@ -1,3 +1,10 @@
+# Local variables with cloud-init custom YAMLs
+locals {
+  ansible_cicustom = "user=local:snippets/ansible-ci.yaml"
+  postgresql_cicustom = "user=local:snippets/postgresql-ci.yaml"
+  pgpool_cicustom = local.postgresql_cicustom
+}
+
 # Ansible server
 resource "proxmox_vm_qemu" "ansible" {
   name = "ansible"
@@ -33,7 +40,7 @@ resource "proxmox_vm_qemu" "ansible" {
     size    = "10G"
   }
 
-  cicustom = "user=local:snippets/ansible-ci.yml"
+  cicustom = local.ansible_cicustom
 }
 
 # PGPool server
@@ -71,7 +78,46 @@ resource "proxmox_vm_qemu" "pgpool" {
     size    = "4G"
   }
 
-  cicustom = "user=local:snippets/postgresql-ci.yaml"
+  cicustom = local.pgpool_cicustom
+}
+
+# PostgreSQL node servers
+resource "proxmox_vm_qemu" "postgresql" {
+  count = 3
+  name  = "postgresql-${count.index + 1}"
+  desc  = "Virtual Machine for PostgreSQL node ${count.index + 1}"
+
+  target_node = var.target_node
+  onboot      = true
+
+  clone   = var.template
+  os_type = "cloud-init"
+  agent   = 1
+
+  cores   = 2
+  sockets = 1
+  memory  = 2048
+  cpu     = "host"
+
+  vga {
+    type   = "std"
+    memory = 4
+  }
+
+  network {
+    model  = "virtio"
+    bridge = "vmbr0"
+  }
+
+  ipconfig0 = "ip=dhcp,ip6=dhcp"
+
+  disk {
+    type    = "scsi"
+    storage = "local-lvm"
+    size    = "15G"
+  }
+
+  cicustom = local.postgresql_cicustom
 }
 
 
@@ -138,9 +184,11 @@ resource "null_resource" "ansible-provisioning" {
     destination = local.ansible_private_key_path
   }
 
-  # Create a simple config file for Ansible and check if both sent files are on Ansible server
+  # Create a simple config file for Ansible, clone and launch project on Ansible server
+  # TODO: Split Ansible playbooks into different project on GitHub or figure out cloning only one directory
   provisioner "remote-exec" {
-    inline = ["stat ${local.ansible_remote_inventory} ${local.ansible_private_key_path}",
-    "echo '[defaults]\ninventory = ${local.ansible_remote_inventory}' > ${local.ansible_config_path}"]
+    inline = ["echo '[defaults]\ninventory = ${local.ansible_remote_inventory}' > ${local.ansible_config_path}",
+              "git clone https://github.com/ACzOps/gamexpol.git",
+              "ansible-playbook /home/ansible/gamexpol/ansible/ansible-playbook.yaml"]
   }
 }
