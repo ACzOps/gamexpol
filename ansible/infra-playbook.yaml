@@ -3,11 +3,14 @@
   hosts: localhost
   gather_facts: yes
 
-- name: Common provisioning for every host
+- name: Common provisioning for every host to keep stuff DRY
   ansible.builtin.import_playbook: "{{ playbook_dir }}/common-playbook.yaml"
 
 - name: Provision Ansible server
   ansible.builtin.import_playbook: "{{ playbook_dir }}/ansible-playbook.yaml"
+
+- name: Provision Gitea server
+  ansible.builtin.import_playbook: "{{ playbook_dir }}/gitea-playbook.yaml"
 
 - name: Provision PostgreSQL server nodes
   ansible.builtin.import_playbook: "{{ playbook_dir }}/postgresql-playbook.yaml"

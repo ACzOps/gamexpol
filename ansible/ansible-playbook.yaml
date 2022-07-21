@@ -2,14 +2,8 @@
 - name: Self-configuration of Ansible server
   hosts: localhost
   gather_facts: yes
-  remote_user: ansible
 
   tasks:
-    - name: Change hostname to ansible
-      ansible.builtin.hostname: 
-        name: ansible
-      become: true
-
     - name: Set right permissions to private key
       ansible.builtin.file:
         path: /home/ansible/dbkey.pem

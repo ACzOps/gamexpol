@@ -164,7 +164,9 @@ resource "proxmox_vm_qemu" "gitea" {
 # Local variables with data to send inventory
 locals {
   hypervisor_private_key_path = "./dbkey.pem"
-  ansible_ssh_user            = "ansible"
+  ansible_user                = "ansible"
+  postgresql_user             = "postgres"
+  ansible_ssh_user            = local.ansible_user
   ansible_ssh_port            = 22
   ansible_local_inventory     = "./ansible/ansible-inventory.yaml"
   ansible_remote_inventory    = "/home/ansible/ansible-inventory.yaml"
@@ -185,18 +187,21 @@ resource "local_file" "ansible-inventory" {
   content = <<DOC
 ---
 all:
-  vars:
-    ansible_user: postgres
+  vars: 
     ansible_private_key_file: ${local.ansible_private_key_path}
+    ansible_user: ${local.ansible_user}
   hosts:
     pgpool:
       ansible_host: ${proxmox_vm_qemu.pgpool.default_ipv4_address}
+      ansible_user: ${local.postgresql_user}
     ansible:
       ansible_host: ${proxmox_vm_qemu.ansible.default_ipv4_address}
     gitea:
       ansible_host: ${proxmox_vm_qemu.gitea.default_ipv4_address}
   children:
     postgresql:
+      vars: 
+        ansible_user: ${local.postgresql_user}
       hosts:
         ${join("\n        ", [for x in proxmox_vm_qemu.postgresql.*.default_ipv4_address : format("postgresql-%d:\n          ansible_host: %s", index(proxmox_vm_qemu.postgresql.*.default_ipv4_address, x) + 1, x)])}
     DOC     
@@ -230,7 +235,7 @@ resource "null_resource" "ansible-provisioning" {
   # TODO: Split Ansible playbooks into different project on GitHub or figure out cloning only one directory
   provisioner "remote-exec" {
     inline = ["echo '[defaults]\ninventory = ${local.ansible_remote_inventory}' > ${local.ansible_config_path}",
-              "git clone ${local.git_project}",
-              "ansible-playbook /home/ansible/gamexpol/ansible/infra-playbook.yaml"]
+      "git clone ${local.git_project}",
+    "ansible-playbook /home/ansible/gamexpol/ansible/infra-playbook.yaml"]
   }
 }

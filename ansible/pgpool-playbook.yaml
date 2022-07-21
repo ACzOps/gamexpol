@@ -5,7 +5,6 @@
 - name: Configuration of PGPool server
   hosts: pgpool
   gather_facts: yes
-  remote_user: postgres
   become: true
 
   tasks:
@@ -14,16 +13,6 @@
         update_cache: true 
         name: pgpool2
     
-    - name: Change hostname to Inventory hostname
-      ansible.builtin.hostname: 
-        name: "{{ inventory_hostname }}"
-
-    - name: Change /etc/hosts
-      ansible.builtin.replace:
-        path: /etc/hosts
-          regexp: '\bnotnamed\b'
-          replace: '{{ inventory_hostname }}'
-
     - name: Delete old config file
       ansible.builtin.file:
         path: "/etc/pgpool2/{{ item.conf }}"

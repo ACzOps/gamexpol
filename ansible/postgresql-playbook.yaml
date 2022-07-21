@@ -6,22 +6,11 @@
 - name: Playbook to install and configure PostgreSQL nodes
   hosts: postgresql
   gather_facts: true
-  remote_user: postgres
 
   tasks:
     - name: Install and enable PostgreSQL as root
       become: true
       block:
-        - name: Change hostname to Inventory hostname
-          ansible.builtin.hostname: 
-            name: "{{ inventory_hostname }}"
-
-        - name: Change /etc/hosts
-          ansible.builtin.replace:
-            path: /etc/hosts
-            regexp: '\bnotnamed\b'
-            replace: '{{ inventory_hostname }}'
-
         - name: Add user postgres to group postgres if cloud-init failed doing that once again
           ansible.builtin.command:
             cmd: usermod -aG postgres postgres
@@ -61,31 +50,6 @@
       register: replicator
       # Don't throw errors when user already exists in cluster
       failed_when: not "'already exists' in replicator.stderr"
-
-    # - name: Add permissions on primary host allowing connections from replicas to replicate
-    #   delegate_to: postgresql-1
-    #   run_once: true 
-    #   block:
-    #     - name: Craete a temporary file with additional ACLs for pg_hba.conf including replica hosts
-    #       ansible.builtin.template:
-    #         src: /home/ansible/pg_hba.j2
-    #         dest: /tmp/pg_hba.conf.end
-
-    #     - name: Check if current ACL file contains already entries about replicas
-    #       ansible.builtin.command: grep -Ff /tmp/pg_hba.conf.end /etc/postgresql/14/main/pg_hba.conf
-    #       register: grep 
-    #       failed_when: grep.rc == 2
-        
-    #     - name: Concatenate templated ACL file with pg_hba.conf 
-    #       when: grep.rc == 1
-    #       ansible.builtin.shell: cat /tmp/pg_hba.conf.end >> /etc/postgresql/14/main/pg_hba.conf
-
-    #     - name: Restart PostgreSQL on primary node
-    #       ansible.builtin.systemd:
-    #         name: postgresql@14-main
-    #         enabled: true
-    #         state: restarted
-    #       become: true
 
     - name: Configure pg_hba.conf on every PostgreSQL node
       block:

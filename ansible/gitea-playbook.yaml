@@ -1,0 +1,11 @@
+---
+- name: Playbook to configure Gitea server
+  hosts: gitea
+  gather_facts: true
+
+  tasks:
+    - name: Install Gitea from snap
+      snap: 
+        name: gitea
+        state: present
+      become: true
