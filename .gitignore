@@ -1,0 +1,7 @@
+credentials.auto.tfvars
+ansible-old
+*.tfplan
+*.tfstate
+*.tfstate.backup
+terraform-proxmox.log
+.terraform*

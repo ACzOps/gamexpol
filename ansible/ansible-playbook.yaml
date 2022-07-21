@@ -1,0 +1,79 @@
+---
+- name: Self-configuration of Ansible server
+  hosts: localhost
+  gather_facts: yes
+  become: yes
+
+  tasks:
+    - name: Change hostname to ansible
+      ansible.builtin.hostname: 
+        name: ansible
+
+    - name: Set right permissions to private key
+      ansible.builtin.file:
+        path: /home/ansible/dbkey.pem
+        mode: '0400'
+        group: ansible
+        owner: ansible
+
+    - name: Install additional packages 
+      ansible.builtin.package:
+        name:
+          - git
+          - tree
+        state: latest
+
+    - name: Set AWX
+      block:
+        - name: Install necessary packages for Docker Engine
+          ansible.builtin.apt:
+            update_cache: true
+            name:
+              - ca-certificates
+              - gnupg
+              - lsb-release
+
+        - name: Download GPG key from Docker
+          ansible.builtin.get_url:
+            url: https://download.docker.com/linux/ubuntu/gpg
+            dest: /tmp/docker.gpg
+        
+        - name: Dearmor downloaded key and write it to keyring directory
+          ansible.builtin.expect:
+            command: gpg --dearmor -o /etc/apt/keyrings/docker.gpg /tmp/docker.gpg
+            responses:
+              (?i)overwrite: "y"
+          
+        - name: Add Docker source list to Aptitude sources.list.d directory
+          ansible.builtin.shell: 
+            cmd: echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
+
+        - name: Install Docker
+          ansible.builtin.apt:
+            update_cache: true
+            name:
+              - docker-ce 
+              - docker-ce-cli 
+              - containerd.io 
+              - docker-compose-plugin
+
+        - name: Add Ansible user to Docker group
+          ansible.builtin.command:
+            cmd: usermod -aG docker ansible
+              
+        - name: Check if Minikube is available on the system
+          ansible.builtin.command:
+            cmd: which minikube
+          register: minikube
+          ignore_errors: true
+
+        - name: Download and install Minikube from Google servers
+          ansible.builtin.apt:
+            deb: https://storage.googleapis.com/minikube/releases/latest/minikube_latest_amd64.deb
+          when: minikube.rc != 0
+
+        - name: Run Kubernetes cluster in Minikube 
+          ansible.builtin.command:
+            cmd: minikube start --addons=ingress --cpus=4 --cni=flannel --install-addons=true --kubernetes-version=stable --memory=4g
+
+    

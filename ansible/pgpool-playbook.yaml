@@ -1,0 +1,43 @@
+---
+# TODO:
+# Add hardcoded backend_data_directory to variable and send to Jinja2 script
+
+- name: Configuration of PGPool server
+  hosts: pgpool
+  gather_facts: yes
+  remote_user: postgres
+  become: true
+
+  tasks:
+    - name: Install PGPool package
+      ansible.builtin.apt:
+        update_cache: true 
+        name: pgpool2
+    
+    - name: Change hostname to Inventory hostname
+      ansible.builtin.hostname: 
+        name: "{{ inventory_hostname }}"
+
+    - name: Delete old config file
+      ansible.builtin.file:
+        path: "/etc/pgpool2/{{ item.conf }}"
+        state: absent
+      loop:
+        - { conf: pgpool.conf }
+        - { conf: pool_hba.conf }
+
+    - name: Generate config file from template
+      ansible.builtin.template:
+        src: "/home/ansible/templates/{{ item.src }}"
+        dest: "/etc/pgpool2/{{ item.dest }}"
+      loop:
+        - { src: pgpool.j2, dest: pgpool.conf }
+        - { src: pool_hba.j2, dest: pool_hba.conf }
+    
+    - name: Restart PGPool service
+      ansible.builtin.systemd:
+        name: pgpool2
+        enabled: true
+        state: restarted
+
+    

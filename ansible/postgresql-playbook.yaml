@@ -1,0 +1,118 @@
+---
+# TODO:
+# Convert all hardcoded strings into variables (also in j2 templates)
+# Add handlers
+
+- name: Playbook to install and configure PostgreSQL nodes
+  hosts: postgresql
+  gather_facts: true
+  remote_user: postgres
+
+  tasks:
+    - name: Install and enable PostgreSQL as root
+      become: true
+      block:
+        - name: Change hostname to Inventory hostname
+          ansible.builtin.hostname: 
+            name: "{{ inventory_hostname }}"
+
+        - name: Change /etc/hosts
+          ansible.builtin.replace:
+            path: /etc/hosts
+            regexp: '\bnotnamed\b'
+            replace: '{{ inventory_hostname }}'
+
+        - name: Add user postgres to group postgres if cloud-init failed doing that once again
+          ansible.builtin.command:
+            cmd: usermod -aG postgres postgres
+
+        - name: Update APT and install PostgreSQL 
+          ansible.builtin.apt:
+            name:
+              - postgresql 
+              - postgresql-contrib
+
+        - name: Enable and start PostgreSQL service
+          ansible.builtin.systemd:
+            name: postgresql.service
+            enabled: true
+            state: started
+
+    - name: Check if main cluster exists and is online
+      ansible.builtin.shell: pg_lsclusters | awk '/main/ && /online/'
+      register: main
+      failed_when: main.stdout | length == 0
+
+    - name: Check if main cluster exists and is online (alternative approach)
+      ansible.builtin.shell: pg_ctlcluster 14 main status | grep 'server is running'
+
+    - name: Print main cluster status
+      ansible.builtin.debug: 
+        var: main.stdout
+
+    - name: Change listen addresses to all interfaces in PostgreSQL cluster configfile
+      ansible.builtin.lineinfile:
+        path: /etc/postgresql/14/main/postgresql.conf
+        regexp: "^#listen_addresses(.*)"
+        line: listen_addresses = '*'
+
+    - name: Create separate user with replication permissions only
+      ansible.builtin.shell: psql --port=5432 --command='create user replicator replication;'
+      register: replicator
+      # Don't throw errors when user already exists in cluster
+      failed_when: not "'already exists' in replicator.stderr"
+
+    # - name: Add permissions on primary host allowing connections from replicas to replicate
+    #   delegate_to: postgresql-1
+    #   run_once: true 
+    #   block:
+    #     - name: Craete a temporary file with additional ACLs for pg_hba.conf including replica hosts
+    #       ansible.builtin.template:
+    #         src: /home/ansible/pg_hba.j2
+    #         dest: /tmp/pg_hba.conf.end
+
+    #     - name: Check if current ACL file contains already entries about replicas
+    #       ansible.builtin.command: grep -Ff /tmp/pg_hba.conf.end /etc/postgresql/14/main/pg_hba.conf
+    #       register: grep 
+    #       failed_when: grep.rc == 2
+        
+    #     - name: Concatenate templated ACL file with pg_hba.conf 
+    #       when: grep.rc == 1
+    #       ansible.builtin.shell: cat /tmp/pg_hba.conf.end >> /etc/postgresql/14/main/pg_hba.conf
+
+    #     - name: Restart PostgreSQL on primary node
+    #       ansible.builtin.systemd:
+    #         name: postgresql@14-main
+    #         enabled: true
+    #         state: restarted
+    #       become: true
+
+    - name: Configure pg_hba.conf on every PostgreSQL node
+      block:
+        - name: Delete old config file
+          ansible.builtin.file:
+            path: /etc/postgresql/14/main/pg_hba.conf
+            state: absent
+
+        - name: Generate config file from template
+          ansible.builtin.template:
+            src: /home/ansible/templates/pg_hba.j2
+            dest: /etc/postgresql/14/main/pg_hba.conf
+
+    - name: Set replicas for replication
+      when: inventory_hostname != "postgresql-1"
+      block:
+        - name: Delete all the files within main cluster directory
+          ansible.builtin.file: 
+            state: absent
+            path: /var/lib/postgresql/14/main/
+
+        - name: Launch replication on replica
+          ansible.builtin.command: pg_basebackup -h {{ hostvars['postgresql-1']['ansible_host'] }} -U replicator -p 5432 --checkpoint=fast -D /var/lib/postgresql/14/main/ -R -Fp -Xs --progress
+
+    - name: Restart PostgreSQL main cluster on every node
+      ansible.builtin.systemd:
+        name: postgresql@14-main
+        enabled: true
+        state: restarted
+      become: true

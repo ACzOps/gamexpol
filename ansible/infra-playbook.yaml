@@ -1,0 +1,13 @@
+---
+- name: Playbook gathering all the other playbooks to provision infra
+  hosts: all
+  gather_facts: yes
+
+- name: Provision Ansible server
+  ansible.builtin.import_playbook: ansible-playbook.yaml
+
+- name: Provision PostgreSQL server nodes
+  ansible.builtin.import_playbook: postgresql-playbook.yaml
+
+- name: Provision PGPool load balancer
+  ansible.builtin.import_playbook: pgpool-playbook.yaml
