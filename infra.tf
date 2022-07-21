@@ -1,8 +1,8 @@
 # Local variables with cloud-init custom YAMLs
 locals {
-  ansible_cicustom = "user=local:snippets/ansible-ci.yaml"
+  ansible_cicustom    = "user=local:snippets/ansible-ci.yaml"
   postgresql_cicustom = "user=local:snippets/postgresql-ci.yaml"
-  pgpool_cicustom = local.postgresql_cicustom
+  pgpool_cicustom     = local.postgresql_cicustom
 }
 
 # Ansible server
@@ -120,6 +120,44 @@ resource "proxmox_vm_qemu" "postgresql" {
   cicustom = local.postgresql_cicustom
 }
 
+# Gitea server for local Git service 
+resource "proxmox_vm_qemu" "gitea" {
+  name = "gitea"
+  desc = "Virtual Machine for Gitea source code repository"
+
+  target_node = var.target_node
+  onboot      = true
+
+  clone   = var.template
+  os_type = "cloud-init"
+  agent   = 1
+
+  cores   = 2
+  sockets = 1
+  memory  = 2048
+  cpu     = "host"
+
+  vga {
+    type   = "std"
+    memory = 4
+  }
+
+  network {
+    model  = "virtio"
+    bridge = "vmbr0"
+  }
+
+  ipconfig0 = "ip=dhcp,ip6=dhcp"
+
+  disk {
+    type    = "scsi"
+    storage = "local-lvm"
+    size    = "10G"
+  }
+
+  cicustom = "user=local:snippets/common-ci.yaml"
+}
+
 
 ### Ansible inventory YAML file creation
 
@@ -132,7 +170,7 @@ locals {
   ansible_remote_inventory    = "/home/ansible/ansible-inventory.yaml"
   ansible_config_path         = "/home/ansible/.ansible.cfg"
   ansible_private_key_path    = "/home/ansible/dbkey.pem"
-  git_project = "https://github.com/ACzOps/gamexpol.git"
+  git_project                 = "https://github.com/ACzOps/gamexpol.git"
 }
 
 resource "local_file" "ansible-inventory" {
@@ -140,7 +178,8 @@ resource "local_file" "ansible-inventory" {
   depends_on = [
     proxmox_vm_qemu.pgpool,
     proxmox_vm_qemu.ansible,
-    proxmox_vm_qemu.postgresql
+    proxmox_vm_qemu.postgresql,
+    proxmox_vm_qemu.gitea,
   ]
 
   content = <<DOC
@@ -154,6 +193,8 @@ all:
       ansible_host: ${proxmox_vm_qemu.pgpool.default_ipv4_address}
     ansible:
       ansible_host: ${proxmox_vm_qemu.ansible.default_ipv4_address}
+    gitea:
+      ansible_host: ${proxmox_vm_qemu.gitea.default_ipv4_address}
   children:
     postgresql:
       hosts:

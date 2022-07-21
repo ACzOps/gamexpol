@@ -1,0 +1,16 @@
+#cloud-config
+
+# Default cloud-init setup of common VM
+hostname: notnamed
+manage_etc_hosts: true
+users:
+  - default
+  - name: ansible
+    gecos: Account for Ansible to allow provisioning
+    primary_group: ansible
+    groups: users
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    lock_passwd: true
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDaAUzG1ejtRTm9AiZXlC1wpp1N8fZ9qV3hc/chewnpVlcPJ+igGk7QfhnfehLgYVlmJBB8s/6eIi+xCwZdm/orQi/QXYeopBt9+YUuOmiJj+16eUQpbiW9Ou9aBJ0rrw3CoFbMvarQ5nRiLigXUIPcATb2aNWzn9wE15SC+blXkqy1IfIzYpVvAnLGO6FSxeN4p99LSGAlb5uS1mborrYkwMCpYyLk9qT1afv8IY1tU0QWHaAQ+8pFp5FLT6xjlxgX1k3TqtFy5hFRmROgJVvOywK066AzRjhvFIyHw0aIel6i0JvfII7skoIGNWnmWH9dJ7lSz8/dIIMvZPgFZMBjxJ7E0ALIR1SBDN8oRuw0J85IQoCyuiAOQAoZmg0x+e81kpW2wP/EjBtjEbS6L3diYF0ma6B63ZmjjXVj11nAtIkTbmXA6d4VvuGp1gBAwJRVTfKzO+L4sg3F1FTZIeSQiDKkR1a9yKe+w/QMcGuvNsqgaBC5MZgses03p1SxUgoIBPj62o4uTCf1dE9rd4MtJnKphszDYSXt4SvwVTFEN4RPsmkqXGwEUaY0pkCtqhCzf3VsKozz8lZsEsSlTgDDQ7gxxSE7hh6oFSY5UTNN8tgrDvTMVArKxjbYN5rXOVvI072qP4mK8PW+hjlAkeBnIeUbKn5wF47705TCRb6jvw==
