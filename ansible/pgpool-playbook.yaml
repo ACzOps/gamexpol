@@ -28,7 +28,7 @@
 
     - name: Generate config file from template
       ansible.builtin.template:
-        src: "/home/ansible/templates/{{ item.src }}"
+        src: "{{ playbook_dir }}/templates/{{ item.src }}"
         dest: "/etc/pgpool2/{{ item.dest }}"
       loop:
         - { src: pgpool.j2, dest: pgpool.conf }
