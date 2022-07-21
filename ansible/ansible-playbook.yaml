@@ -70,5 +70,5 @@
     
     - name: Run Kubernetes cluster in Minikube 
       ansible.builtin.shell:
-        cmd: sudo usermod -aG ansible && newgrp docker && minikube start --addons=ingress --cpus=4 --cni=flannel --install-addons=true --kubernetes-version=stable --memory=4g
+        cmd: /bin/bash minikube start --addons=ingress --cpus=4 --cni=flannel --install-addons=true --kubernetes-version=stable --memory=4g
     
