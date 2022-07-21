@@ -1,6 +1,6 @@
 ---
 - name: Playbook gathering all the other playbooks to provision infra
-  hosts: all
+  hosts: localhost
   gather_facts: yes
 
 - name: Provision Ansible server

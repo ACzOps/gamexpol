@@ -5,3 +5,4 @@ ansible-old
 *.tfstate.backup
 terraform-proxmox.log
 .terraform*
+*.pem

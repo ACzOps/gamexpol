@@ -125,10 +125,10 @@ resource "proxmox_vm_qemu" "postgresql" {
 
 # Local variables with data to send inventory
 locals {
-  hypervisor_private_key_path = "/root/.ssh/dbkey"
+  hypervisor_private_key_path = "./dbkey.pem"
   ansible_ssh_user            = "ansible"
   ansible_ssh_port            = 22
-  ansible_local_inventory     = "/root/infra/database/ansible/ansible-inventory.yaml"
+  ansible_local_inventory     = "./ansible/ansible-inventory.yaml"
   ansible_remote_inventory    = "/home/ansible/ansible-inventory.yaml"
   ansible_config_path         = "/home/ansible/.ansible.cfg"
   ansible_private_key_path    = "/home/ansible/dbkey.pem"
