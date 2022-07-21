@@ -67,8 +67,9 @@
             deb: https://storage.googleapis.com/minikube/releases/latest/minikube_latest_amd64.deb
           when: minikube.rc != 0
 
+    
     - name: Run Kubernetes cluster in Minikube 
       ansible.builtin.shell:
-        cmd: newgrp docker && minikube start --addons=ingress --cpus=4 --cni=flannel --install-addons=true --kubernetes-version=stable --memory=4g
+        cmd: whoami && newgrp docker && minikube start --addons=ingress --cpus=4 --cni=flannel --install-addons=true --kubernetes-version=stable --memory=4g
 
     
