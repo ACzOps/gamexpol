@@ -63,12 +63,12 @@
             src: "{{ playbook_dir }}/templates/pg_hba.j2"
             dest: /etc/postgresql/14/main/pg_hba.conf
 
-        - name: Reload PostgreSQL main cluster on every node
-          ansible.builtin.systemd:
-            name: postgresql@14-main
-            enabled: true
-            state: reloaded
-          become: true
+    - name: Restart PostgreSQL main cluster on every node
+      ansible.builtin.systemd:
+        name: postgresql@14-main
+        enabled: true
+        state: restarted
+      become: true
 
     - name: Set replicas for replication
       when: inventory_hostname != "postgresql-1"
@@ -80,10 +80,3 @@
 
         - name: Launch replication on replica
           ansible.builtin.command: pg_basebackup -h {{ hostvars['postgresql-1']['ansible_host'] }} -U replicator -p 5432 --checkpoint=fast -D /var/lib/postgresql/14/main/ -R -Fp -Xs --progress
-
-    - name: Restart PostgreSQL main cluster on every node
-      ansible.builtin.systemd:
-        name: postgresql@14-main
-        enabled: true
-        state: restarted
-      become: true
