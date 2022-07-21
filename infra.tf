@@ -132,6 +132,7 @@ locals {
   ansible_remote_inventory    = "/home/ansible/ansible-inventory.yaml"
   ansible_config_path         = "/home/ansible/.ansible.cfg"
   ansible_private_key_path    = "/home/ansible/dbkey.pem"
+  git_project = "https://github.com/ACzOps/gamexpol.git"
 }
 
 resource "local_file" "ansible-inventory" {
@@ -188,7 +189,7 @@ resource "null_resource" "ansible-provisioning" {
   # TODO: Split Ansible playbooks into different project on GitHub or figure out cloning only one directory
   provisioner "remote-exec" {
     inline = ["echo '[defaults]\ninventory = ${local.ansible_remote_inventory}' > ${local.ansible_config_path}",
-              "git clone https://github.com/ACzOps/gamexpol.git",
-              "ansible-playbook /home/ansible/gamexpol/ansible/ansible-playbook.yaml"]
+              "git clone ${local.git_project}",
+              "ansible-playbook /home/ansible/gamexpol/ansible/infra-playbook.yaml"]
   }
 }
