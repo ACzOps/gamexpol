@@ -1,80 +1,3 @@
-# PGPool server
-resource "proxmox_vm_qemu" "pgpool" {
-  name = "pgpool"
-  desc = "Virtual Machine for PGPool II"
-
-  target_node = var.target_node
-  onboot      = true
-
-  clone   = var.template
-  os_type = "cloud-init"
-  agent   = 1
-
-  cores   = 1
-  sockets = 1
-  memory  = 2048
-  cpu     = "host"
-
-  vga {
-    type   = "std"
-    memory = 4
-  }
-
-  network {
-    model  = "virtio"
-    bridge = "vmbr0"
-  }
-
-  ipconfig0 = "ip=dhcp,ip6=dhcp"
-
-  disk {
-    type    = "scsi"
-    storage = "local-lvm"
-    size    = "4G"
-  }
-
-  cicustom = "user=local:snippets/postgresql-ci.yml"
-}
-
-# PostgreSQL + etcd node servers
-resource "proxmox_vm_qemu" "postgresql" {
-  count = 3
-  name  = "postgresql-${count.index + 1}"
-  desc  = "Virtual Machine for PostgreSQL node ${count.index + 1}"
-
-  target_node = var.target_node
-  onboot      = true
-
-  clone   = var.template
-  os_type = "cloud-init"
-  agent   = 1
-
-  cores   = 2
-  sockets = 1
-  memory  = 2048
-  cpu     = "host"
-
-  vga {
-    type   = "std"
-    memory = 4
-  }
-
-  network {
-    model  = "virtio"
-    bridge = "vmbr0"
-  }
-
-  ipconfig0 = "ip=dhcp,ip6=dhcp"
-
-  disk {
-    type    = "scsi"
-    storage = "local-lvm"
-    size    = "15G"
-  }
-
-  cicustom = "user=local:snippets/postgresql-ci.yml"
-}
-
 # Ansible server
 resource "proxmox_vm_qemu" "ansible" {
   name = "ansible"
@@ -110,11 +33,49 @@ resource "proxmox_vm_qemu" "ansible" {
     size    = "10G"
   }
 
-  cicustom = "user=local:snippets/ansible4db-ci.yml"
+  cicustom = "user=local:snippets/ansible-ci.yml"
+}
+
+# PGPool server
+resource "proxmox_vm_qemu" "pgpool" {
+  name = "pgpool"
+  desc = "Virtual Machine for PGPool II"
+
+  target_node = var.target_node
+  onboot      = true
+
+  clone   = var.template
+  os_type = "cloud-init"
+  agent   = 1
+
+  cores   = 1
+  sockets = 1
+  memory  = 2048
+  cpu     = "host"
+
+  vga {
+    type   = "std"
+    memory = 4
+  }
+
+  network {
+    model  = "virtio"
+    bridge = "vmbr0"
+  }
+
+  ipconfig0 = "ip=dhcp,ip6=dhcp"
+
+  disk {
+    type    = "scsi"
+    storage = "local-lvm"
+    size    = "4G"
+  }
+
+  cicustom = "user=local:snippets/postgresql-ci.yaml"
 }
 
 
-#### Ansible inventory YAML file creation
+### Ansible inventory YAML file creation
 
 # Local variables with data to send inventory
 locals {
