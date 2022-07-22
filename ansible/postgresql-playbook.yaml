@@ -71,7 +71,7 @@
 
         - name: Restart PostgreSQL main cluster on every node
           ansible.builtin.systemd:
-            name: postgresql@14-main
+            name: postgresql
             enabled: true
             state: restarted
           become: true
