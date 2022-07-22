@@ -163,7 +163,9 @@ resource "proxmox_vm_qemu" "gitea" {
 
 # Local variables with data to send inventory
 locals {
-  hypervisor_private_key_path = "./dbkey.pem"
+  local_key_path = "./dbkey.pem"
+  remote_key_path    = "/home/ansible/dbkey.pem"
+
   ansible_user                = "ansible"
   postgresql_user             = "postgres"
   ansible_ssh_user            = local.ansible_user
@@ -171,8 +173,11 @@ locals {
   ansible_local_inventory     = "./ansible/ansible-inventory.yaml"
   ansible_remote_inventory    = "/home/ansible/ansible-inventory.yaml"
   ansible_config_path         = "/home/ansible/.ansible.cfg"
-  ansible_private_key_path    = "/home/ansible/dbkey.pem"
+
   git_project                 = "https://github.com/ACzOps/gamexpol.git"
+  infra_playbook = "/home/ansible/gamexpol/ansible/infra-playbook.yaml"
+  script_local_path = "./scripts/launch-ansible.sh"
+  script_remote_path = "/home/ansible/launch-ansible.sh"
 }
 
 resource "local_file" "ansible-inventory" {
@@ -188,7 +193,7 @@ resource "local_file" "ansible-inventory" {
 ---
 all:
   vars: 
-    ansible_private_key_file: ${local.ansible_private_key_path}
+    ansible_private_key_file: ${local.remote_key_path}
     ansible_user: ${local.ansible_user}
   hosts:
     pgpool:
@@ -213,7 +218,7 @@ resource "null_resource" "ansible-provisioning" {
   connection {
     host        = proxmox_vm_qemu.ansible.default_ipv4_address
     type        = "ssh"
-    private_key = file(local.hypervisor_private_key_path)
+    private_key = file(local.local_key_path)
     port        = local.ansible_ssh_port
     user        = local.ansible_ssh_user
     agent       = false
@@ -227,15 +232,21 @@ resource "null_resource" "ansible-provisioning" {
 
   # Sending private key from local to Ansible server to connect to other VMs
   provisioner "file" {
-    source      = local.hypervisor_private_key_path
-    destination = local.ansible_private_key_path
+    source      = local.local_key_path
+    destination = local.remote_key_path
+  }
+
+  # Sending launching playbook script from local to Ansible server
+  provisioner "file" {
+    source      = local.script_local_path
+    destination = local.script_remote_path
   }
 
   # Create a simple config file for Ansible, clone and launch project on Ansible server
   # TODO: Split Ansible playbooks into different project on GitHub or figure out cloning only one directory
   provisioner "remote-exec" {
     inline = ["echo '[defaults]\ninventory = ${local.ansible_remote_inventory}' > ${local.ansible_config_path}",
-      "git clone ${local.git_project}",
-    "ansible-playbook /home/ansible/gamexpol/ansible/infra-playbook.yaml"]
+              "chmod 755 /home/ansible/launch-ansible.sh",
+              "/home/ansible/launch-ansible.sh -repo ${local.git_project} -playbook ${local.infra_playbook}"]
   }
 }

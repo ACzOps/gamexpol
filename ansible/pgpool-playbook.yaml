@@ -8,10 +8,12 @@
   become: true
 
   tasks:
-    - name: Install PGPool package
+    - name: Install PGPool package and PostgreSQL client 
       ansible.builtin.apt:
         update_cache: true 
-        name: pgpool2
+        name: 
+          - pgpool2
+          - postgresql-client-14
     
     - name: Delete old config file
       ansible.builtin.file:
