@@ -334,7 +334,7 @@ disable_load_balance_on_write = 'transaction'
                                    # 'always': if a write query is issued, read queries will
                                    # not be load balanced until the session ends.
 
-statement_level_load_balance = off
+statement_level_load_balance = on
                                    # Enables statement level load balancing
 
 #------------------------------------------------------------------------------
@@ -352,7 +352,7 @@ master_slave_mode = off
 
 # - Streaming -
 
-sr_check_period = 5
+sr_check_period = 3
                                    # Streaming replication check period
                                    # Disabled (0) by default
 sr_check_user = 'replicator'
