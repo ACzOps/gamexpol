@@ -51,17 +51,23 @@
       # Don't throw errors when user already exists in cluster
       failed_when: not "'already exists' in replicator.stderr"
 
-    - name: Configure pg_hba.conf on every PostgreSQL node
+    - name: Configure pg_hba.conf and postgresql.conf on every PostgreSQL node
       block:
-        - name: Delete old config file
+        - name: Delete old config files
           ansible.builtin.file:
-            path: /etc/postgresql/14/main/pg_hba.conf
+            path: "/etc/postgresql/14/main/{{ item.conf }}"
             state: absent
+          loop:
+            - { conf: postgresql.conf }
+            - { conf: pg_hba.conf }
 
-        - name: Generate config file from template
+        - name: Generate config files from templates
           ansible.builtin.template:
-            src: "{{ playbook_dir }}/templates/pg_hba.j2"
-            dest: /etc/postgresql/14/main/pg_hba.conf
+            src: "{{ playbook_dir }}/templates/{{ item.src }}"
+            dest: "/etc/postgresql/14/main/{{ item.dest }}"
+          loop:
+            - { src: postgresql.j2, dest: postgresql.conf }
+            - { src: pg_hba.j2, dest: pg_hba.conf }
 
     - name: Restart PostgreSQL main cluster on every node
       ansible.builtin.systemd:
