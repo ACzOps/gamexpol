@@ -17,3 +17,6 @@
 
 - name: Provision PGPool load balancer
   ansible.builtin.import_playbook: "{{ playbook_dir }}/pgpool-playbook.yaml"
+
+- name: Provision Kubernetes machines
+  ansible.builtin.import_playbook: "{{ playbook_dir }}/k8s-playbook.yaml"

@@ -35,15 +35,15 @@
     - name: Check if main cluster exists and is online (alternative approach)
       ansible.builtin.shell: pg_ctlcluster 14 main status | grep 'server is running'
 
-    - name: Print main cluster status
-      ansible.builtin.debug: 
-        var: main.stdout
+    # - name: Print main cluster status
+    #   ansible.builtin.debug: 
+    #     var: main.stdout
 
-    - name: Change listen addresses to all interfaces in PostgreSQL cluster configfile
-      ansible.builtin.lineinfile:
-        path: /etc/postgresql/14/main/postgresql.conf
-        regexp: "^#listen_addresses(.*)"
-        line: listen_addresses = '*'
+    # - name: Change listen addresses to all interfaces in PostgreSQL cluster configfile
+    #   ansible.builtin.lineinfile:
+    #     path: /etc/postgresql/14/main/postgresql.conf
+    #     regexp: "^#listen_addresses(.*)"
+    #     line: listen_addresses = '*'
 
     - name: Create separate user with replication permissions only
       ansible.builtin.shell: psql --port=5432 --command='create user replicator replication;'
@@ -69,11 +69,11 @@
             - { src: postgresql.j2, dest: postgresql.conf }
             - { src: pg_hba.j2, dest: pg_hba.conf }
 
-        - name: Restart PostgreSQL main cluster on every node
+        - name: Reload PostgreSQL main cluster on every node
           ansible.builtin.systemd:
-            name: postgresql
+            name: postgresql@14-main
             enabled: true
-            state: restarted
+            state: reloaded
           become: true
 
     - name: Set replicas for replication
@@ -94,9 +94,9 @@
         - name: Launch replication on replicas
           ansible.builtin.command: pg_basebackup -h {{ hostvars['postgresql-1']['ansible_host'] }} -U replicator -p 5432 --checkpoint=fast -D /var/lib/postgresql/14/main/ -R -Fp -Xs --progress --slot=fuckpsql{{ range(1000,9999) | random }} -C
 
-        - name: Start PostgreSQL replicas
+        - name: Reload PostgreSQL replicas
           ansible.builtin.systemd:
             name: postgresql@14-main
             enabled: true
-            state: restarted
+            state: reloaded
           become: true

@@ -26,6 +26,9 @@ host    replication     replicator      {{hostvars[node]['ansible_host']}}/32   
         {% endif %}
     {% endfor %}
 {% endif %}
+
 # ACL to allow connection from PGPool
-host    all             all             {{hostvars['pgpool']['ansible_host']}}/32           trust
-host    postgres        replicator      {{hostvars['pgpool']['ansible_host']}}/32           trust
+{% for node in groups['pgpool'] %}
+host    all             all             {{hostvars[node]['ansible_host']}}/32           trust
+host    postgres        replicator      {{hostvars[node]['ansible_host']}}/32           trust
+{% endfor %}
