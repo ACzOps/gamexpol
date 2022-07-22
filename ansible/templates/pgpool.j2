@@ -148,7 +148,7 @@ client_idle_limit = 0
 
 # - Where to log -
 
-log_destination = 'stderr'
+log_destination = 'syslog'
                                    # Where to log
                                    # Valid values are combinations of stderr,
                                    # and syslog. Default to stderr.
@@ -157,14 +157,14 @@ log_destination = 'stderr'
 
 log_line_prefix = '%t: pid %p: '   # printf-style string to output at beginning of each log line.
 
-log_connections = off
+log_connections = on
                                    # Log connections
-log_hostname = off
+log_hostname = on
                                    # Hostname will be shown in ps status
                                    # and in logs if connections are logged
-log_statement = off
+log_statement = on
                                    # Log all statements
-log_per_node_statement = off
+log_per_node_statement = on
                                    # Log all statements
                                    # with node and backend informations
 log_client_messages = off
@@ -399,7 +399,7 @@ follow_master_command = ''
 health_check_period = 5
                                    # Health check period
                                    # Disabled (0) by default
-health_check_timeout = 30
+health_check_timeout = 0
                                    # Health check timeout
                                    # 0 means no timeout
 health_check_user = 'replicator'
@@ -409,10 +409,10 @@ health_check_password = ''
                                    # Leaving it empty will make Pgpool-II to first look for the
                                    # Password in pool_passwd file before using the empty password
 
-health_check_database = ''
+health_check_database = 'postgres'
                                    # Database name for health check. If '', tries 'postgres' frist, then 'template1'
 
-health_check_max_retries = 3
+health_check_max_retries = 0
                                    # Maximum number of times to retry a failed health check before giving up.
 health_check_retry_delay = 1
                                    # Amount of time to wait (in seconds) between retries.
@@ -656,22 +656,17 @@ wd_interval = 10
 
 # -- heartbeat mode --
 
-wd_heartbeat_port = 9694
+#wd_heartbeat_port = 9694
                                     # Port number for receiving heartbeat signal
                                     # (change requires restart)
-wd_heartbeat_keepalive = 2
+#wd_heartbeat_keepalive = 2
                                     # Interval time of sending heartbeat signal (sec)
                                     # (change requires restart)
-wd_heartbeat_deadtime = 30
+#wd_heartbeat_deadtime = 30
                                     # Deadtime interval for heartbeat signal (sec)
                                     # (change requires restart)
 
-{% for node in groups['postgresql'] %}
-# --- Heartbeat config for {{ hostvars[node]['ansible_host'] }} as backend{{ loop.index0 }} --- #
-heartbeat_destination{{ loop.index0 }} = '{{ hostvars[node]['ansible_host'] }}'
-heartbeat_destination_port{{ loop.index0 }}  = 9694
-heartbeat_device{{ loop.index0 }} = ''                                  
-{% endfor %}
+
 
 # -- query mode --
 

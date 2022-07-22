@@ -14,7 +14,13 @@
         name: 
           - pgpool2
           - postgresql-client-14
-    
+
+    - name: Stop PGPool service
+      ansible.builtin.systemd:
+        name: pgpool2
+        enabled: true
+        state: stopped
+   
     - name: Delete old config file
       ansible.builtin.file:
         path: "/etc/pgpool2/{{ item.conf }}"
@@ -31,10 +37,16 @@
         - { src: pgpool.j2, dest: pgpool.conf }
         - { src: pool_hba.j2, dest: pool_hba.conf }
     
-    - name: Restart PGPool service
+    - name: Remove node status file
+      ansible.builtin.file: 
+        state: absent
+        path: /var/log/postgresql/pgpool_status
+
+    - name: Start PGPool service
       ansible.builtin.systemd:
         name: pgpool2
         enabled: true
-        state: restarted
+        state: started
+
 
     

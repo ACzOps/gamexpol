@@ -69,20 +69,34 @@
             - { src: postgresql.j2, dest: postgresql.conf }
             - { src: pg_hba.j2, dest: pg_hba.conf }
 
-    - name: Restart PostgreSQL main cluster on every node
-      ansible.builtin.systemd:
-        name: postgresql@14-main
-        enabled: true
-        state: restarted
-      become: true
+        - name: Restart PostgreSQL main cluster on every node
+          ansible.builtin.systemd:
+            name: postgresql@14-main
+            enabled: true
+            state: restarted
+          become: true
 
     - name: Set replicas for replication
       when: inventory_hostname != "postgresql-1"
       block:
+        - name: Stop PostgreSQL replicas
+          ansible.builtin.systemd:
+            name: postgresql@14-main
+            enabled: true
+            state: stopped
+          become: true
+
         - name: Delete all the files within main cluster directory
           ansible.builtin.file: 
             state: absent
             path: /var/lib/postgresql/14/main/
 
-        - name: Launch replication on replica
+        - name: Launch replication on replicas
           ansible.builtin.command: pg_basebackup -h {{ hostvars['postgresql-1']['ansible_host'] }} -U replicator -p 5432 --checkpoint=fast -D /var/lib/postgresql/14/main/ -R -Fp -Xs --progress --slot=fuckpsql{{ range(1000,9999) | random }} -C
+
+        - name: Start PostgreSQL replicas
+          ansible.builtin.systemd:
+            name: postgresql@14-main
+            enabled: true
+            state: started
+          become: true

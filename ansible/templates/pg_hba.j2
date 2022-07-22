@@ -28,3 +28,4 @@ host    replication     replicator      {{hostvars[node]['ansible_host']}}/32   
 {% endif %}
 # ACL to allow connection from PGPool
 host    all             all             {{hostvars['pgpool']['ansible_host']}}/32           trust
+host    postgres        replicator      {{hostvars['pgpool']['ansible_host']}}/32           trust
