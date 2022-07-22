@@ -85,4 +85,4 @@
             path: /var/lib/postgresql/14/main/
 
         - name: Launch replication on replica
-          ansible.builtin.command: pg_basebackup -h {{ hostvars['postgresql-1']['ansible_host'] }} -U replicator -p 5432 --checkpoint=fast -D /var/lib/postgresql/14/main/ -R -Fp -Xs --progress --slot=fuck_psql -C
+          ansible.builtin.command: pg_basebackup -h {{ hostvars['postgresql-1']['ansible_host'] }} -U replicator -p 5432 --checkpoint=fast -D /var/lib/postgresql/14/main/ -R -Fp -Xs --progress --slot={{ inventory_name }}

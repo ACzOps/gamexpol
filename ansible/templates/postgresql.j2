@@ -335,11 +335,12 @@ min_wal_size = 80MB
 
 {% if inventory_hostname != "postgresql-1" %}
 #promote_trigger_file = '/tmp/tango-down.trigger'
+hot_standby = on			# "off" disallows queries during recovery
 {% else %}
 #promote_trigger_file = ''		# file name whose presence ends recovery
+#hot_standby = on			# "off" disallows queries during recovery
 {% endif %}
 
-#hot_standby = on			# "off" disallows queries during recovery
 					# (change requires restart)
 #max_standby_archive_delay = 30s	# max delay before canceling queries
 					# when reading WAL from archive;
