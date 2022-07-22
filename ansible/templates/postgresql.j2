@@ -102,12 +102,12 @@ unix_socket_directories = '/var/run/postgresql'	# comma-separated list of direct
 
 # - SSL -
 
-ssl = on
+ssl = off
 #ssl_ca_file = ''
-ssl_cert_file = '/etc/ssl/certs/ssl-cert-snakeoil.pem'
+#ssl_cert_file = '/etc/ssl/certs/ssl-cert-snakeoil.pem'
 #ssl_crl_file = ''
 #ssl_crl_dir = ''
-ssl_key_file = '/etc/ssl/private/ssl-cert-snakeoil.key'
+#ssl_key_file = '/etc/ssl/private/ssl-cert-snakeoil.key'
 #ssl_ciphers = 'HIGH:MEDIUM:+3DES:!aNULL' # allowed SSL ciphers
 #ssl_prefer_server_ciphers = on
 #ssl_ecdh_curve = 'prime256v1'
@@ -208,8 +208,8 @@ dynamic_shared_memory_type = posix	# the default is the first option
 					# (turning this off can cause
 					# unrecoverable data corruption)
 {% if inventory_hostname == "postgresql-1" %}
-synchronous_commit = remote_apply
-wal_log_hints = on			# also do full page writes of non-critical updates
+#synchronous_commit = remote_apply
+#wal_log_hints = on			# also do full page writes of non-critical updates
 {% else %}
 #synchronous_commit = on		# synchronization level;
 #wal_log_hints = off			# also do full page writes of non-critical updates
@@ -316,7 +316,7 @@ min_wal_size = 80MB
 # These settings are ignored on a standby server.
 
 {% if inventory_hostname == "postgresql-1" %}
-synchronous_standby_names = '*'
+#synchronous_standby_names = '*'
 {% else %}
 #synchronous_standby_names = ''	# standby servers that provide sync rep
 {% endif %}
@@ -334,7 +334,7 @@ synchronous_standby_names = '*'
 #primary_slot_name = ''			# replication slot on sending server
 
 {% if inventory_hostname != "postgresql-1" %}
-promote_trigger_file = '/tmp/tango-down.trigger'
+#promote_trigger_file = '/tmp/tango-down.trigger'
 {% else %}
 #promote_trigger_file = ''		# file name whose presence ends recovery
 {% endif %}
@@ -447,27 +447,27 @@ promote_trigger_file = '/tmp/tango-down.trigger'
 
 # - Where to Log -
 
-#log_destination = 'stderr'		# Valid values are combinations of
+log_destination = 'stderr'		# Valid values are combinations of
 					# stderr, csvlog, syslog, and eventlog,
 					# depending on platform.  csvlog
 					# requires logging_collector to be on.
 
 # This is used when logging to stderr:
-#logging_collector = off		# Enable capturing of stderr and csvlog
+logging_collector = on		# Enable capturing of stderr and csvlog
 					# into log files. Required to be on for
 					# csvlogs.
 					# (change requires restart)
 
 # These are only used if logging_collector is on:
-#log_directory = 'log'			# directory where log files are written,
+log_directory = 'log'			# directory where log files are written,
 					# can be absolute or relative to PGDATA
-#log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'	# log file name pattern,
+log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'	# log file name pattern,
 					# can include strftime() escapes
 #log_file_mode = 0600			# creation mode for log files,
 					# begin with 0 to use octal notation
-#log_rotation_age = 1d			# Automatic rotation of logfiles will
+log_rotation_age = 1d			# Automatic rotation of logfiles will
 					# happen after that time.  0 disables.
-#log_rotation_size = 10MB		# Automatic rotation of logfiles will
+log_rotation_size = 10MB		# Automatic rotation of logfiles will
 					# happen after that much log output.
 					# 0 disables.
 #log_truncate_on_rotation = off		# If on, an existing log file with the
@@ -787,7 +787,7 @@ default_text_search_config = 'pg_catalog.english'
 #------------------------------------------------------------------------------
 
 #exit_on_error = off			# terminate session on any error?
-#restart_after_crash = on		# reinitialize after backend crash?
+restart_after_crash = on		# reinitialize after backend crash?
 #data_sync_retry = off			# retry or panic on failure to fsync
 					# data?
 					# (change requires restart)

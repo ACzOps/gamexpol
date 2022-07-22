@@ -20,11 +20,11 @@ host    replication     all             ::1/128                 scram-sha-256
 
 {% if inventory_hostname == "postgresql-1" %}
 # ACL to allow connection from replicas to primary
-{% for node in groups['postgresql'] %}
-{% if node != "postgresql-1" %}
-host    replication             replicator      {{hostvars[node]['ansible_host']}}/32           trust
-{% endif %}
-{% endfor %}
+    {% for node in groups['postgresql'] %}
+        {% if node != "postgresql-1" %}
+host    replication     replicator      {{hostvars[node]['ansible_host']}}/32               trust
+        {% endif %}
+    {% endfor %}
 {% endif %}
 # ACL to allow connection from PGPool
-host    all     all      {{hostvars['pgpool']['ansible_host']}}/32           trust
+host    all             all             {{hostvars['pgpool']['ansible_host']}}/32           trust

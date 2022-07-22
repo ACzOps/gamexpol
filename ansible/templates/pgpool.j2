@@ -2,6 +2,8 @@
 # pgPool-II configuration file
 # ----------------------------
 
+backend_clustering_mode = 'streaming_replication'
+
 #------------------------------------------------------------------------------
 # CONNECTIONS
 #------------------------------------------------------------------------------
@@ -568,7 +570,7 @@ wd_ipc_socket_dir = '/tmp'
 
 # - Virtual IP control Setting -
 
-delegate_IP = '10.10.10.100'
+#delegate_IP = '10.10.10.100'
                                     # delegate IP address
                                     # If this is empty, virtual IP never bring up.
                                     # (change requires restart)
