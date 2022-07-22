@@ -79,12 +79,12 @@
     - name: Set replicas for replication
       when: inventory_hostname != "postgresql-1"
       block:
-        - name: Stop PostgreSQL replicas
-          ansible.builtin.systemd:
-            name: postgresql@14-main
-            enabled: true
-            state: stopped
-          become: true
+        # - name: Stop PostgreSQL replicas
+        #   ansible.builtin.systemd:
+        #     name: postgresql@14-main
+        #     enabled: true
+        #     state: stopped
+        #   become: true
 
         - name: Delete all the files within main cluster directory
           ansible.builtin.file: 
@@ -98,5 +98,5 @@
           ansible.builtin.systemd:
             name: postgresql@14-main
             enabled: true
-            state: started
+            state: restarted
           become: true
