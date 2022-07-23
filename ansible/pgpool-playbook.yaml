@@ -8,12 +8,14 @@
   become: true
 
   tasks:
-    - name: Install PGPool package and PostgreSQL client 
+    - name: Install PGPool package and other tools
       ansible.builtin.apt:
         update_cache: true 
+        state: latest
         name: 
           - pgpool2
           - postgresql-client-14
+          - net-tools
 
     - name: Stop PGPool service
       ansible.builtin.systemd:

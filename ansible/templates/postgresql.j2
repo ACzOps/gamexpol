@@ -315,12 +315,10 @@ synchronous_standby_names = '*'
 
 {% if inventory_hostname != "postgresql-1" %}
 #promote_trigger_file = '/tmp/tango-down.trigger'
-standby_mode = on
 hot_standby = on			
 {% else %}
 #promote_trigger_file = ''		# file name whose presence ends recovery
 #hot_standby = on		
-#standby_mode = on	
 {% endif %}
 
 					# (change requires restart)

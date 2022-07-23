@@ -15,11 +15,13 @@
           ansible.builtin.command:
             cmd: usermod -aG postgres postgres
 
-        - name: Update APT and install PostgreSQL 
+        - name: Update APT and install PostgreSQL and tools
           ansible.builtin.apt:
+            state: latest
             name:
               - postgresql 
               - postgresql-contrib
+              - net-tools
 
         - name: Enable and start PostgreSQL service
           ansible.builtin.systemd:
@@ -34,16 +36,6 @@
 
     - name: Check if main cluster exists and is online (alternative approach)
       ansible.builtin.shell: pg_ctlcluster 14 main status | grep 'server is running'
-
-    - name: Print main cluster status
-      ansible.builtin.debug: 
-        var: main.stdout
-
-    - name: Change listen addresses to all interfaces in PostgreSQL cluster configfile
-      ansible.builtin.lineinfile:
-        path: /etc/postgresql/14/main/postgresql.conf
-        regexp: "^#listen_addresses(.*)"
-        line: listen_addresses = '*'
 
     - name: Create separate user with replication permissions only
       ansible.builtin.shell: psql --port=5432 --command='create user replicator replication;'
@@ -71,7 +63,7 @@
 
         - name: Restart PostgreSQL main cluster on every node
           ansible.builtin.systemd:
-            name: postgresql
+            name: postgresql@14-main
             enabled: true
             state: restarted
           become: true
@@ -79,12 +71,12 @@
     - name: Set replicas for replication
       when: inventory_hostname != "postgresql-1"
       block:
-        # - name: Stop PostgreSQL replicas
-        #   ansible.builtin.systemd:
-        #     name: postgresql@14-main
-        #     enabled: true
-        #     state: stopped
-        #   become: true
+        - name: Stop PostgreSQL replicas
+          ansible.builtin.systemd:
+            name: postgresql@14-main
+            enabled: true
+            state: stopped
+          become: true
 
         - name: Delete all the files within main cluster directory
           ansible.builtin.file: 
@@ -98,5 +90,5 @@
           ansible.builtin.systemd:
             name: postgresql@14-main
             enabled: true
-            state: restarted
+            state: started
           become: true

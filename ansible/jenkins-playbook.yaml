@@ -1,0 +1,34 @@
+---
+- name: Installation and configuration Jenkins CI/CD server
+  hosts: jenkins
+  gather_facts: true
+
+  tasks:
+    - name: Install Jenkins from APT
+      become: true
+      block:
+        - name: Download and install necessary packages
+          ansible.builtin.apt:
+            update_cache: true 
+            state: latest
+            name: 
+              - openjdk-17-jdk-headless
+              - git
+              - net-tools
+        
+        - name: Download Jenkins public key and add to keyrings
+          ansible.builtin.get_url:
+            url: https://pkg.jenkins.io/debian-stable/jenkins.io.key
+            dest: /usr/share/keyrings/jenkins-keyring.asc
+
+        - name: Add Jenkins repository to sources list
+          ansible.builtin.copy:
+            content: deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/
+            dest: /etc/apt/sources.list.d/jenkins.list
+
+        - name: Update APT and install Jenkins
+          ansible.builtin.apt:
+            update_cache: true 
+            state: latest
+            name: jenkins
+  
