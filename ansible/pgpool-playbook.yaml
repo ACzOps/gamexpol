@@ -16,7 +16,6 @@
           - pgpool2
           - postgresql-client-14
           - net-tools
-        
 
     - name: Stop PGPool service
       ansible.builtin.systemd:

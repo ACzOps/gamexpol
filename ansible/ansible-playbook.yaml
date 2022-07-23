@@ -24,7 +24,6 @@
               - gnupg
               - lsb-release
 
-
         - name: Download GPG key from Docker
           ansible.builtin.get_url:
             url: https://download.docker.com/linux/ubuntu/gpg

@@ -37,16 +37,6 @@
     - name: Check if main cluster exists and is online (alternative approach)
       ansible.builtin.shell: pg_ctlcluster 14 main status | grep 'server is running'
 
-    # - name: Print main cluster status
-    #   ansible.builtin.debug: 
-    #     var: main.stdout
-
-    # - name: Change listen addresses to all interfaces in PostgreSQL cluster configfile
-    #   ansible.builtin.lineinfile:
-    #     path: /etc/postgresql/14/main/postgresql.conf
-    #     regexp: "^#listen_addresses(.*)"
-    #     line: listen_addresses = '*'
-
     - name: Create separate user with replication permissions only
       ansible.builtin.shell: psql --port=5432 --command='create user replicator replication;'
       register: replicator

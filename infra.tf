@@ -361,9 +361,9 @@ all:
 
     kubernetes:
       hosts:
-        cplane:
+        k8s-cplane:
           ansible_host: ${proxmox_vm_qemu.k8s-cplane.default_ipv4_address}
-        ${join("\n        ", [for x in proxmox_vm_qemu.k8s-node.*.default_ipv4_address : format("node-%d:\n          ansible_host: %s", index(proxmox_vm_qemu.k8s-node.*.default_ipv4_address, x) + 1, x)])}
+        ${join("\n        ", [for x in proxmox_vm_qemu.k8s-node.*.default_ipv4_address : format("k8s-node-%d:\n          ansible_host: %s", index(proxmox_vm_qemu.k8s-node.*.default_ipv4_address, x) + 1, x)])}
     DOC     
 }
 
