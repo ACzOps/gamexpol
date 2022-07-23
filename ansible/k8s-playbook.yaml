@@ -5,5 +5,5 @@
 
   tasks: 
     - name: Disable swap on every machine
-      ansible.builtin.shell: sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab && swapoff
+      ansible.builtin.shell: sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab && swapoff -a
       become: true

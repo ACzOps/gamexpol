@@ -1,3 +1,9 @@
+# Main .tf file to build Gamexpol infrastructure
+
+# TODO:
+# Do not forget about setting Artifactory server!
+
+
 # Local variables with cloud-init custom YAMLs
 locals {
   ansible_cicustom    = "user=local:snippets/ansible-ci.yaml"
@@ -26,7 +32,7 @@ resource "proxmox_vm_qemu" "ansible" {
 
   cores   = 4
   sockets = 1
-  memory  = 6144
+  memory  = 4096
   cpu     = "host"
 
   vga {
@@ -291,6 +297,7 @@ resource "proxmox_vm_qemu" "k8s-node" {
 }
 
 
+#-------------------------------------|      Provisioning section      |--------------------------------
 
 ### Ansible inventory YAML file creation
 
@@ -320,6 +327,9 @@ resource "local_file" "ansible-inventory" {
     proxmox_vm_qemu.ansible,
     proxmox_vm_qemu.postgresql,
     proxmox_vm_qemu.gitea,
+    proxmox_vm_qemu.jenkins,
+    proxmox_vm_qemu.k8s-cplane,
+    proxmox_vm_qemu.k8s-node
   ]
 
   content = <<DOC
@@ -328,6 +338,7 @@ all:
   vars: 
     ansible_private_key_file: ${local.remote_key_path}
     ansible_user: ${local.ansible_user}
+
   hosts:
     ansible:
       ansible_host: ${proxmox_vm_qemu.ansible.default_ipv4_address}
@@ -335,6 +346,7 @@ all:
       ansible_host: ${proxmox_vm_qemu.gitea.default_ipv4_address}
     jenkins:
       ansible_host: ${proxmox_vm_qemu.jenkins.default_ipv4_address}
+
   children:
     postgresql:
       vars: 
@@ -346,6 +358,7 @@ all:
         ansible_user: ${local.postgresql_user}
       hosts:
         ${join("\n        ", [for x in proxmox_vm_qemu.pgpool.*.default_ipv4_address : format("pgpool-%d:\n          ansible_host: %s", index(proxmox_vm_qemu.pgpool.*.default_ipv4_address, x) + 1, x)])}
+
     kubernetes:
       hosts:
         cplane:
@@ -353,6 +366,7 @@ all:
         ${join("\n        ", [for x in proxmox_vm_qemu.k8s-node.*.default_ipv4_address : format("node-%d:\n          ansible_host: %s", index(proxmox_vm_qemu.k8s-node.*.default_ipv4_address, x) + 1, x)])}
     DOC     
 }
+
 
 resource "null_resource" "ansible-provisioning" {
   depends_on = [local_file.ansible-inventory]

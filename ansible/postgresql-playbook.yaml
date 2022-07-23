@@ -15,11 +15,13 @@
           ansible.builtin.command:
             cmd: usermod -aG postgres postgres
 
-        - name: Update APT and install PostgreSQL 
+        - name: Update APT and install PostgreSQL and tools
           ansible.builtin.apt:
+            state: latest
             name:
               - postgresql 
               - postgresql-contrib
+              - net-tools
 
         - name: Enable and start PostgreSQL service
           ansible.builtin.systemd:
@@ -69,22 +71,22 @@
             - { src: postgresql.j2, dest: postgresql.conf }
             - { src: pg_hba.j2, dest: pg_hba.conf }
 
-        - name: Reload PostgreSQL main cluster on every node
+        - name: Restart PostgreSQL main cluster on every node
           ansible.builtin.systemd:
             name: postgresql@14-main
             enabled: true
-            state: reloaded
+            state: restarted
           become: true
 
     - name: Set replicas for replication
       when: inventory_hostname != "postgresql-1"
       block:
-        # - name: Stop PostgreSQL replicas
-        #   ansible.builtin.systemd:
-        #     name: postgresql@14-main
-        #     enabled: true
-        #     state: stopped
-        #   become: true
+        - name: Stop PostgreSQL replicas
+          ansible.builtin.systemd:
+            name: postgresql@14-main
+            enabled: true
+            state: stopped
+          become: true
 
         - name: Delete all the files within main cluster directory
           ansible.builtin.file: 
@@ -94,9 +96,9 @@
         - name: Launch replication on replicas
           ansible.builtin.command: pg_basebackup -h {{ hostvars['postgresql-1']['ansible_host'] }} -U replicator -p 5432 --checkpoint=fast -D /var/lib/postgresql/14/main/ -R -Fp -Xs --progress --slot=fuckpsql{{ range(1000,9999) | random }} -C
 
-        - name: Reload PostgreSQL replicas
+        - name: Start PostgreSQL replicas
           ansible.builtin.systemd:
             name: postgresql@14-main
             enabled: true
-            state: reloaded
+            state: started
           become: true

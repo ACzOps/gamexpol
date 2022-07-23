@@ -1,4 +1,5 @@
 ---
+# TODO: Write a script to launch Minikube and then execute
 - name: Self-configuration of Ansible server
   hosts: localhost
   gather_facts: yes
@@ -17,10 +18,12 @@
         - name: Install necessary packages for Docker Engine
           ansible.builtin.apt:
             update_cache: true
+            state: latest
             name:
               - ca-certificates
               - gnupg
               - lsb-release
+
 
         - name: Download GPG key from Docker
           ansible.builtin.get_url:
@@ -40,6 +43,7 @@
         - name: Install Docker
           ansible.builtin.apt:
             update_cache: true
+            state: latest
             name:
               - docker-ce 
               - docker-ce-cli 
@@ -61,7 +65,7 @@
             deb: https://storage.googleapis.com/minikube/releases/latest/minikube_latest_amd64.deb
           when: minikube.rc != 0
 
-    # TODO: Write a script to launch Minikube and then execute
+ 
     # - name: Run Kubernetes cluster in Minikube 
     #   ansible.builtin.shell:
     #     cmd: newgrp docker && minikube start --addons=ingress --cpus=4 --cni=flannel --install-addons=true --kubernetes-version=stable --memory=4g

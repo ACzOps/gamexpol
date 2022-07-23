@@ -36,7 +36,7 @@ else
 fi
 
 # Step two: clone repository
-git clone $REPO
+git clone -b kubernetes $REPO
 rc=$?
 if [[ $rc -ne 0 ]]
 then
