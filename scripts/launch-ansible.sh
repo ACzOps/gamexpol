@@ -35,8 +35,8 @@ else
     echo "Command ansible-playbook is found!"
 fi
 
-# Step two: clone repository
-git clone -b kubernetes $REPO
+# Step two: clone repository (CHECK APPLIED BRANCH)
+git clone -b k8s-config $REPO
 rc=$?
 if [[ $rc -ne 0 ]]
 then
