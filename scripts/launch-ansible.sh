@@ -46,5 +46,6 @@ else
     echo "Repository has been cloned successfully!"
 fi
 
-# Step three: launch initial playbook
+# Step three: launch initial playbook after waiting some time to finish apt-get installation
+sleep 15
 ansible-playbook $PLAYBOOK
