@@ -5,3 +5,7 @@ There are three steps of this project:
 1. Create on-premise infrastructure as code based on Virtual Machines
 2. Move service by service to on-premise Kubernetes what's possible and cost-effective without overengineering too much
 3. Move containerized infrastructure to cloud provider
+
+Our current infrastructure architecture status can be seen on an image below. Please appreciate logo font, because our designer gave whole 30% of his energy by doing that. :)
+
+![Infrastructure](gamexpol.jpg)
