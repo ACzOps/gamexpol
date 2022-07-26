@@ -22,7 +22,7 @@
 
     - name: Write to config file to let iptables see bridged traffic
       ansible.builtin.copy: 
-        content: {{ params }}
+        content: "{{ params }}"
         dest: /etc/sysctl.d/kubernetes.conf
 
     - name: Setup containerd
@@ -39,7 +39,7 @@
 
         - name: Setup sysctl params for containerd
           ansible.builtin.copy: 
-            content: {{ params }}
+            content: "{{ params }}"
             dest: /etc/sysctl.d/99-kubernetes-cri.conf
 
     - name: Load sysctl parameters from all system configuration files
