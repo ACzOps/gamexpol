@@ -1,9 +1,162 @@
 ---
 - name: Installation and configuration Kubernetes infrastructure
   hosts: kubernetes
+  become: true
   gather_facts: true
+  vars:
+    params: |
+      net.bridge.bridge-nf-call-ip6tables = 1
+      net.bridge.bridge-nf-call-iptables = 1
+      net.ipv4.ip_forward = 1
+    pod_network: 172.16.0.0/16
 
   tasks: 
-    - name: Disable swap on every machine
+    - name: Check architecture
+      ansible.builtin.command: 
+        cmd: dpkg --print-architecture
+      register: arch
+
+    - name: Check Ubuntu version codename
+      ansible.builtin.command: 
+        cmd: lsb_release -cs
+      register: lsb
+
+    - name: Edit fstab and disable swap on every machine to prevent performance bodge
       ansible.builtin.shell: sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab && swapoff -a
-      become: true
+
+    - name: Add overlay module
+      community.general.modprobe:
+        name: overlay
+        state: present
+
+    - name: Add br_netfiler module
+      community.general.modprobe:
+        name: br_netfilter
+        state: present
+
+    - name: Write to config file to let iptables see bridged traffic
+      ansible.builtin.copy: 
+        content: "{{ params }}"
+        dest: /etc/sysctl.d/kubernetes.conf
+
+    - name: Setup containerd
+      block:
+        - name: Add modules to load for containerd
+          ansible.builtin.copy:
+            content: |
+              overlay
+              br_netfilter
+            dest: /etc/modules-load.d/containerd.conf
+
+        - name: Setup sysctl params for containerd
+          ansible.builtin.copy: 
+            content: "{{ params }}"
+            dest: /etc/sysctl.d/99-kubernetes-cri.conf
+
+    - name: Load sysctl parameters from all system configuration files
+      ansible.builtin.command:
+        cmd: sysctl --system
+
+    - name: Install containerd.io
+      block:
+        - name: Download GPG key from Docker
+          ansible.builtin.get_url:
+            url: https://download.docker.com/linux/ubuntu/gpg
+            dest: /tmp/docker.gpg
+        
+        - name: Dearmor downloaded key and write it to keyring directory
+          ansible.builtin.expect:
+            command: gpg --dearmor -o /etc/apt/keyrings/docker.gpg /tmp/docker.gpg
+            responses:
+              (?i)overwrite: "y"
+
+        - name: Add Docker source list to APT sources.list.d directory
+          ansible.builtin.copy: 
+            content: "deb [arch={{ arch.stdout }} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ lsb.stdout }} stable"
+            dest: /etc/apt/sources.list.d/docker.list
+
+        - name: Install containerd
+          ansible.builtin.apt:
+            update_cache: true
+            state: latest
+            name:
+              - containerd.io 
+
+        - name: Generate default containerd config file and replace existing one
+          ansible.builtin.shell:
+            cmd: containerd config default | tee /etc/containerd/config.toml > /dev/null
+
+        - name: Restart containerd service
+          ansible.builtin.systemd:
+            name: containerd
+            enabled: true
+            state: restarted
+          
+    - name: Configure APT and install Kubernetes components
+      block:
+        - name: Download GPG key from Google APT
+          ansible.builtin.get_url:
+            url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+            dest: /tmp/kubernetes.gpg
+
+        - name: Dearmor downloaded key and write it to keyring directory
+          ansible.builtin.expect:
+            command: gpg --dearmor -o /etc/apt/keyrings/kubernetes.gpg /tmp/kubernetes.gpg
+            responses:
+              (?i)overwrite: "y"
+
+        - name: Add Kubernetes source list to APT sources.list.d directory
+          ansible.builtin.copy: 
+            # Sadly the last Kubernetes repository is for Ubuntu 16.04 Xenial Xerus :(
+            # If there will be any changes, commented line below is ready to roll
+            #content: "deb [arch={{ arch.stdout }} signed-by=/etc/apt/keyrings/kubernetes.gpg] https://apt.kubernetes.io/ kubernetes-{{ lsb.stdout }} main"
+            content: "deb [arch={{ arch.stdout }} signed-by=/etc/apt/keyrings/kubernetes.gpg] https://apt.kubernetes.io/ kubernetes-xenial main"
+            dest: /etc/apt/sources.list.d/kubernetes.list
+
+        - name: Install Kubernetes components in version able to exercise upgrades
+          ansible.builtin.apt:
+            update_cache: true
+            state: present
+            name:
+              - kubelet=1.23.0-00 
+              - kubeadm=1.23.0-00 
+              - kubectl=1.23.0-00
+
+        - name: Pull the images for Kubernetes 1.23
+          ansible.builtin.command: kubeadm config images pull --cri-socket /run/containerd/containerd.sock --kubernetes-version v1.23.0
+
+    - name: Set Kubernetes control plane and join other nodes
+      when: inventory_hostname == 'k8s-cplane'
+      block:
+        - name: Initialize Kubernetes control-plane
+          ansible.builtin.command: "kubeadm init --pod-network-cidr={{ pod_network }}   --upload-certs --kubernetes-version=v1.23.0   --control-plane-endpoint={{ hostvars[inventory_hostname]['ansible_host'] }} --ignore-preflight-errors=Mem  --cri-socket /run/containerd/containerd.sock"
+
+        - name: Install Flannel CNI
+          ansible.builtin.shell: kubectl apply -f https://github.com/coreos/flannel/raw/master/Documentation/kube-flannel.yml
+
+        - name: Add environment variable KUBECONFIG to use kubectl 
+          ansible.builtin.copy:
+            dest: /etc/profile.d/kubernetes.sh
+            content: export KUBECONFIG=/etc/kubernetes/admin.conf
+            mode: '0755'
+            owner: root
+            group: root
+     
+        - name: Generate new token
+          ansible.builtin.command: kubeadm token generate
+          register: token
+        
+        - name: Create join command 
+          ansible.builtin.command: kubeadm token create "{{ token.stdout }}" --print-join-command --ttl=0
+          register: join
+
+        - set_fact:
+            join_cplane: "{{ join.stdout }}"
+
+    - name: Join other nodes into cluster
+      when: inventory_hostname != 'k8s-cplane'
+      ansible.builtin.command: "{{ hostvars['k8s-cplane']['join_cplane'] }}"
+
+
+
+

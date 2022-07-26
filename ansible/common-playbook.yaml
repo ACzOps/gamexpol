@@ -17,4 +17,8 @@
         replace: '{{ inventory_hostname }}'
       register: hosts
 
+    - name: Disable cloud-init to preserve hostname changes
+      ansible.builtin.file:
+        path: /etc/cloud/cloud-init.disabled
+        state: touch
 
