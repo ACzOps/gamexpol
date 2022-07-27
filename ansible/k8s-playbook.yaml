@@ -8,7 +8,7 @@
       net.bridge.bridge-nf-call-ip6tables = 1
       net.bridge.bridge-nf-call-iptables = 1
       net.ipv4.ip_forward = 1
-    pod_network: 172.16.0.0/16
+    pod_network: 10.244.0.0/16    # default network from official Flannel YAML
 
   tasks: 
     - name: Check architecture
@@ -86,6 +86,13 @@
           ansible.builtin.shell:
             cmd: containerd config default | tee /etc/containerd/config.toml > /dev/null
 
+        # Configuring this stuff fixed pods constantly crashing by default
+        - name: Configure systemd cgroup driver in containerd
+          ansible.builtin.lineinfile:
+            path: /etc/containerd/config.toml
+            regexp: '\bSystemdCgroup = false\b'
+            line: SystemdCgroup = true
+
         - name: Restart containerd service
           ansible.builtin.systemd:
             name: containerd
@@ -121,6 +128,9 @@
               - kubelet=1.23.0-00 
               - kubeadm=1.23.0-00 
               - kubectl=1.23.0-00
+
+        - name: Do not autoupdate Kubernetes packages
+          ansible.builtin.command: apt-mark hold kubelet kubeadm kubectl
 
         - name: Pull the images for Kubernetes 1.23
           ansible.builtin.command: kubeadm config images pull --cri-socket /run/containerd/containerd.sock --kubernetes-version v1.23.0
